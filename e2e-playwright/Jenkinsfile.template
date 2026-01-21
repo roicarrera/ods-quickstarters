@@ -1,0 +1,91 @@
+// See https://www.opendevstack.org/ods-documentation/ for usage and customization.
+
+@Library('ods-jenkins-shared-library@@shared_library_ref@') _
+
+node {
+  dockerRegistry = env.DOCKER_REGISTRY
+}
+
+odsComponentPipeline(
+  branchToEnvironmentMapping: [
+    'master': 'dev',
+  ],
+  debug: false,
+  podContainers: [
+    containerTemplate(
+      alwaysPullImage: true,
+      image: "${dockerRegistry}/ods/jenkins-agent-nodejs22:@agent_image_tag@",
+      name: 'jnlp',
+      workingDir: '/tmp',
+      resourceLimitMemory: '4Gi',
+      resourceRequestMemory: '1Gi'
+    ),
+    containerTemplate(
+      alwaysPullImage: true,
+      envVars: [
+        envVar(key: 'HOME', value: '/tmp')
+      ],
+      image: 'mcr.microsoft.com/playwright:v1.51.1-noble',
+      name: 'playwright',
+      ttyEnabled: true,
+      workingDir: '/tmp'
+    )
+  ]
+) { context ->
+    container('playwright') {
+      stageInstallDependency(context)
+      if (context.environment != 'prod') {
+        stageTest(context)
+      } else {
+        stageTestProd(context)
+      }
+    }
+}
+
+def stageInstallDependency(def context) {
+  container('playwright') {
+    stage('Install Dependencies') {
+      sh(
+        label: 'Install exact version of Dependencies',
+        script: 'npm ci'
+      )
+      sh(
+        label: 'Install Playwright browsers',
+        script: 'npx playwright install'
+      )
+    }
+  }
+}
+
+def stageTest(def context) {
+    stage('Functional Test') {
+    container('playwright') {
+      try {
+        sh 'echo "Executing tests on THUB environment: $THUB_ENV"'
+        def testStatus = sh(label: 'Run E2E tests', script: 'npm run test:e2e', returnStatus: true)
+        if (testStatus != 0) {
+	  unstable "Some tests have failed or encountered errors. Please check the logs for more details"
+        }
+
+      } finally {
+        if (fileExists('test-results')) {
+          zip zipFile: 'test-results.zip', archive: false, dir: 'test-results'
+          zip zipFile: 'test-results/screenshots.zip', archive: false, dir: 'test-results/screenshots' 
+          stash(name: "e2e-test-reports-junit-xml-${context.componentId}-${context.buildNumber}", 
+            includes: 'test-results/reports/cucumber_report.xml', allowEmpty: false)
+          stash(name: "e2e-test-screenshots-${context.componentId}-${context.buildNumber}", includes: 'test-results/screenshots.zip', allowEmpty: false)
+          archiveArtifacts artifacts: 'test-results.zip', fingerprint: true
+        }
+      }
+    }
+  }
+}
+
+def stageTestProd(def context) {
+    stage('Installation Test') {
+      def testStatus = sh(label: 'Run Installation tests', script: 'npm run test:e2e:prod', returnStatus:true)
+      if (testStatus != 0) {
+	unstable "Some tests have failed or encountered errors. Please check the logs for more details"
+      }
+    }
+}

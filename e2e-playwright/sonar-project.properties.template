@@ -1,0 +1,11 @@
+# Project Key (required)
+sonar.projectKey=testinghub-e2e-testing
+
+# Project Name (optional)
+sonar.projectName=testinghub-e2e-testing
+
+# Comma-separated paths to directories with sources (required)
+sonar.sources=tests
+
+# Encoding of the source files (optional but recommended as default is ASCII)
+sonar.sourceEncoding=UTF-8

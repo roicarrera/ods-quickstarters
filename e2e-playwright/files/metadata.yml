@@ -1,0 +1,6 @@
+---
+name: Playwright
+description: Playwright is a framework for Web Testing and Automation. It enables reliable end-to-end testing for modern web apps. Technologies: Playwright 1.x, Cucumber, TypeScript 5.x.
+supplier: https://playwright.dev/
+version: 1.x
+type: ods-test
