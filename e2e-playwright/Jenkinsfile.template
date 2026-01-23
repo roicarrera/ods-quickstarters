@@ -61,12 +61,20 @@ def stageTest(def context) {
     stage('Functional Test') {
     container('playwright') {
       try {
-        sh 'echo "Executing tests on THUB environment: $THUB_ENV"'
-        def testStatus = sh(label: 'Run E2E tests', script: 'npm run test:e2e', returnStatus: true)
-        if (testStatus != 0) {
-	  unstable "Some tests have failed or encountered errors. Please check the logs for more details"
+        //You can inject environment variables like this, if you want to inject secrets remember to use withCredentials instead of withEnv
+        withEnv([
+          "ENVIRONMENT=${context.environment}",
+          "BUILD_NUMBER=${context.buildNumber}",
+          "COMPONENT_ID=${context.componentId}",
+          "COMMIT_INFO_SHA=${context.gitCommit}"
+          ]) {
+          sh 'echo "Executing tests on environment: $ENVIRONMENT"'
+          def testStatus = sh(label: 'Run E2E tests', script: 'npm run test:e2e', returnStatus: true)
+          if (testStatus != 0) {
+              echo "E2E tests failed. Marking build as UNSTABLE."
+              currentBuild.result = 'UNSTABLE'
+          }
         }
-
       } finally {
         if (fileExists('test-results')) {
           zip zipFile: 'test-results.zip', archive: false, dir: 'test-results'

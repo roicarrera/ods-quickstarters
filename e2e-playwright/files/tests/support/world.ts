@@ -8,6 +8,7 @@ export class CustomWorld extends World {
     public context!: BrowserContext;
     public lastScreenshot?: Buffer;
     public currentScenario: ITestCaseHookParameter | null = null;
+    public currentStepName?: string;
 
     constructor(options: IWorldOptions) {
         super(options);

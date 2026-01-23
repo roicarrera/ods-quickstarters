@@ -1,11 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { After, AfterAll, Before, BeforeAll, Status, setDefaultTimeout } from '@cucumber/cucumber';
+import { After, AfterAll, Before, BeforeAll, AfterStep, Status, setDefaultTimeout } from '@cucumber/cucumber';
 import { BrowserContext, chromium } from '@playwright/test';
 
 
 import { CustomWorld } from './world';
+import { captureScreenshotWithMetadata } from './screenshot-utils';
 
 process.env.BASE_URL = "https://es.wikipedia.org/wiki";
 process.env.FORCE_COLOR = '0';
@@ -49,30 +50,23 @@ AfterAll(async () => {
   }
 });
 
-Before(async function (this: CustomWorld) {
+Before(async function (this: CustomWorld, scenario) {
+  this.currentScenario = scenario;
   // Stuff to do before each test
   this.context = context;
   this.page = await this.context.newPage();
 });
 
+AfterStep(async function (this: CustomWorld, { pickleStep, result }) {
+  this.currentStepName = pickleStep.text;
+  if (this.currentScenario) {
+    this.currentScenario.result = result;
+    await captureScreenshotWithMetadata(this, this.currentScenario, SCREENSHOT_DIR);
+  }
+});
+
 After(async function (this: CustomWorld, scenario) {
   // Stuff to do after each test
   // By default we take a screenshat always after each test execution for the Validation Managers
-  if (true /*scenario.result?.status === Status.FAILED*/) {
-    const scenarioDirName = `${scenario.pickle.name.replace(/ /g, '_')}.png`;
-    const scenarioDirPath = path.join(SCREENSHOT_DIR, scenarioDirName);
-    fs.mkdirSync(scenarioDirPath, { recursive: true });
-    const screenshotPath = path.join(scenarioDirPath, `${scenario.pickle.name.replace(/ /g, '_')}_${scenario.result?.status}.png`);
-    await this.page.screenshot({ path: screenshotPath, type: 'png' });
-
-    try {
-      const screenshot = fs.readFileSync(screenshotPath);
-      await this.attach(screenshot, 'image/png');
-      this.lastScreenshot = screenshot;
-    } catch (error) {
-      console.error('Failed to read screenshot:', error);
-    }
-  }
-
   await this.page?.close();
 });
