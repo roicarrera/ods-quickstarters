@@ -62,7 +62,7 @@ export async function captureScreenshotWithMetadata(
     const scenarioDirPath = path.join(screenshotBaseDir, scenarioDirName);
     fs.mkdirSync(scenarioDirPath, { recursive: true });
     const stepName = world.currentStepName?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
-    const screenshotPath = path.join(scenarioDirPath, `${scenario.pickle.name.replace(/ /g, '_')}_${stepName}_${scenario.result?.status}.png`);
+    const screenshotPath = path.join(scenarioDirPath, `${stepName}_.png`);
     
     await world.page.screenshot({ path: screenshotPath, type: 'png' });
 
