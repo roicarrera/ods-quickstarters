@@ -4,7 +4,8 @@
   "description": "A ready-to-use Quickstarter for End-to-End (E2E) testing using Playwright, Cucumber (BDD), and TypeScript.",
   "main": "index.js",
   "scripts": {
-    "test:e2e": "cucumber-js"
+    "bdd:generate": "bddgen test",
+    "test:e2e": "npm run bdd:generate && playwright test"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +15,7 @@
     "@cucumber/pretty-formatter": "^1.0.1",
     "@playwright/test": "^1.51.1",
     "@types/node": "^22.9.0",
+    "playwright-bdd": "^8.0.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
   },

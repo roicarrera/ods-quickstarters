@@ -3,6 +3,8 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/.npmrc
+/tests/.features-gen/
 .env
 .package-lock.json
 /temp-profile

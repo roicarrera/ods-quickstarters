@@ -8,7 +8,8 @@ export class BoehringerWikipedia {
     this.Title = this.page.locator(
       'h1 .mw-page-title-main'
     );
-    this.url = process.env.BASE_URL + "/Boehringer_Ingelheim";
+    const baseUrl = process.env.BASE_URL ?? 'https://es.wikipedia.org/wiki';
+    this.url = `${baseUrl}/Boehringer_Ingelheim`;
   }
 
   async goto() {
